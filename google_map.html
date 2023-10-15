@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+    <head>
+        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD2RXC1lxBEsYy15dX3wyHF9lzsokD7VEc"></script>    
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>    
+        
+    </head>
+    <body >
+        <div id="map" style="width:800; height: 600px;"></div>
+    </body>
+    <script src="./js/travel.js"></script>
+    <script>
+        var resp = [];
+        fetch('https://scan.trancport.com/logins/apis/apis.php?v=receivegps').then( response => response.json().then(result=>{
+            resp = result
+        }));
+        function initMap() {
+            const directionsRenderer = new google.maps.DirectionsRenderer();
+            const directionsService = new google.maps.DirectionsService();
+            var map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 14,
+                center: { lat: 37.77, lng: -122.447 } // San Francisco
+            }); 
+            var pathList = [];
+            var final_id;
+            resp.forEach((element)=>{
+                 var path = [];
+                path.push(element);
+                const id = element.id;
+                pathList[id] = path;
+                final_id = id;
+                travel(google.maps, map, pathList[id], id)
+            });
+            var final_element = pathList[final_id];
+            map.setCenter(convpath2Position(final_element, 0));
+            var interval = setInterval(() => {
+                fetch('https://scan.trancport.com/logins/apis/apis.php?v=receivegps').then( response => response.json().then(result=>{
+                    resp = result;
+                    resp.forEach((element)=>{
+                        // let loc = element.loc1;
+                        // var pos = loc.split(",");
+                        // var position = {lat: pos[0], lng: pos[1]};
+                        const id = element.id;
+                        pathList[id].push(element);
+                    })
+                }));
+            }, 1000);
+        }
+        var startInterval = setInterval(() => { 
+            if(resp.length > 0) {
+                initMap();
+                clearInterval(startInterval)
+            }
+        }, 2000);
+        
+    </script>
+</html>
